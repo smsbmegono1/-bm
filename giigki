@@ -349,7 +349,7 @@ local Window =
         HideSearchBar = false,
         ScrollBarEnabled = false,
         OpenButton = {
-            Title = "B King,
+            Title = "B King",
             CornerRadius = UDim.new(1, 0),
             StrokeThickness = 3,
             Enabled = true,
@@ -361,7 +361,7 @@ local Window =
 
 Window:Tag(
     {
-        Title = "v1.0.4",
+        Title = "v1",
         Color = Color3.fromHex("#30ff6a"),
         Radius = 13
     }
@@ -369,7 +369,7 @@ Window:Tag(
 
 Window:Tag(
     {
-        Title = "Blockspin",
+        Title = "ทดลองใช้ฟรี3วัน",
         Color = Color3.fromHex("#FF0000"),
         Radius = 13
     }
