@@ -333,11 +333,11 @@ local Window =
     WindUI:CreateWindow(
     {
         Icon = "rbxassetid://121136649812616", -- my custom vector* icon
-        IconThemed = true 
-        Title = "Kunlun's | Freemium",
+        IconThemed = true, 
+        Title = "ฺB King",
         Icon = "rbxassetid://121136649812616",
-        Author = "by #TBSkyen | discord.gg/NNY22NZ9rx",
-        Folder = "Kunlun's",
+        Author = "by #IluxBKing | discord.gg/รอก่อน",
+        Folder = "B King",
         Size = UDim2.fromOffset(400, 400),
         MinSize = Vector2.new(560, 350),
         MaxSize = Vector2.new(850, 560),
@@ -349,7 +349,7 @@ local Window =
         HideSearchBar = false,
         ScrollBarEnabled = false,
         OpenButton = {
-            Title = "Kunlun's",
+            Title = "B King,
             CornerRadius = UDim.new(1, 0),
             StrokeThickness = 3,
             Enabled = true,
