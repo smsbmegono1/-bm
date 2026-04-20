@@ -331,22 +331,6 @@ Icons.SetIconsType("lucide") -- lucide, craft and more...
 
 local Window =
     WindUI:CreateWindow(
-    {
-        Icon = "rbxassetid://121136649812616", -- my custom vector* icon
-        IconThemed = true,
-        KeySystem = {
-            API = {
-                {
-                    Title = "B King ",
-                    -- optional . you can remove it
-                    Desc = "Click to copy.", -- optional . you can remove it
-                    Icon = "rbxassetid://121136649812616", -- optional . you can remove it
-                    Type = "platoboost",
-                    Secret = "3ba9c2da-7c67-4662-9db4-c47a31c5b70b", -- type
-                    ServiceId = "12900" -- service id
-                }
-            }
-        },
         Title = "B King | Freemium",
         Icon = "rbxassetid://121136649812616",
         Author = "by #TBSkyen | discord.gg/NNY22NZ9rx",
