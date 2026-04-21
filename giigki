@@ -332,10 +332,10 @@ Icons.SetIconsType("lucide") -- lucide, craft and more...
 local Window =
     WindUI:CreateWindow(
     {
-        Icon = "rbxassetid://121136649812616", -- my custom vector* icon
+        Icon = "rbxassetid://103241616716519", -- my custom vector* icon
         IconThemed = true, 
         Title = "ฺB King",
-        Icon = "rbxassetid://121136649812616",
+        Icon = "rbxassetid://103241616716519",
         Author = "by #IluxBKing | discord.gg/รอก่อน",
         Folder = "B King",
         Size = UDim2.fromOffset(400, 400),
