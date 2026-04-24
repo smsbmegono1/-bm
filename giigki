@@ -369,7 +369,7 @@ Window:Tag(
 
 Window:Tag(
     {
-        Title = "ทดลองใช้ฟรี3วัน",
+        Title = "",
         Color = Color3.fromHex("#FF0000"),
         Radius = 13
     }
@@ -427,6 +427,29 @@ task.spawn(
         end
     end
 )
+
+--====================================================
+-- ⚙️ Player Modifier Section
+--====================================================
+MainTab:Section({
+    Title = "Player Modifier:"
+})
+
+-- ✅ ปุ่มล่องหน (Desync) - กดแล้วรันโค้ดจาก GitHub
+MainTab:Button({
+    Title = "ล่องหน (Desync)",
+    Desc = "กดเพื่อเปิด UI ล่องหน",
+    Icon = "eye-off",
+    Locked = false,
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/smsbmegono1/-bm/refs/heads/main/iiiiiiii"))()
+        WindUI:Notify({
+            Title = "Desync",
+            Content = "โหลด UI ล่องหนเรียบร้อย!",
+            Duration = 2
+        })
+    end
+})
 
 --====================================================
 -- ⚙️ Player Modifier Section
