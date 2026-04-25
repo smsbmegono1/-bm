@@ -369,7 +369,7 @@ Window:Tag(
 
 Window:Tag(
     {
-        Title = "",
+        Title = "ของซื้อ",
         Color = Color3.fromHex("#FF0000"),
         Radius = 13
     }
@@ -437,15 +437,15 @@ MainTab:Section({
 
 -- ✅ ปุ่มล่องหน (Desync) - กดแล้วรันโค้ดจาก GitHub
 MainTab:Button({
-    Title = "ล่องหน (Desync)",
-    Desc = "กดเพื่อเปิด UI ล่องหน",
+    Title = "Invisibl สำหรับมือถือ ",
+    Desc = "ไม่ต้องรีตัว เปิดปิดตอนไหนก็ได่้ ",
     Icon = "eye-off",
     Locked = false,
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/smsbmegono1/-bm/refs/heads/main/iiiiiiii"))()
         WindUI:Notify({
             Title = "Desync",
-            Content = "โหลด UI ล่องหนเรียบร้อย!",
+            Content = "เปิด Invisibl",
             Duration = 2
         })
     end
