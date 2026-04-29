@@ -1,164 +1,124 @@
------------------------------------------------------------------------
--- CONFIG
------------------------------------------------------------------------
-local PICKUP_POINT = vector3(-1034.51501, 254.851868, -1132.3855)
-local SWEEP_POINT = vector3(-1043.81946, 254.851868, -1135.45325)
+-- ============================================
+-- FARM SCRIPT FOR MOBILE - WORKING VERSION
+-- ============================================
 
-local SPEED = 2.5           -- ความเร็วบิน (ลดลงถ้าถูกแบน)
-local WAIT_TIME = 0         -- 0 = เร็วสุด, 50 = ช้าลงหน่อย
-local DISTANCE_TOLERANCE = 0.8  -- ระยะที่ถือว่าถึงจุด
+local PICKUP = vector3(-1034.51501, 254.851868, -1132.3855)
+local SWEEP = vector3(-1043.81946, 254.851868, -1135.45325)
 
------------------------------------------------------------------------
--- ตัวแปรระบบ
------------------------------------------------------------------------
-local isAutoRunning = true
-local currentTarget = PICKUP_POINT
-local isFlying = true
+local currentTarget = PICKUP
+local isActive = true
+local alreadyPrinted = false
 
------------------------------------------------------------------------
--- ฟังก์ชันหลัก: บินอัตโนมัติ
------------------------------------------------------------------------
+-- ============================================
+-- MAIN LOOP - เริ่มทำงานทันทีที่สคริปโหลด
+-- ============================================
+
 Citizen.CreateThread(function()
+    -- รอให้เกมโหลดตัวละครเสร็จก่อน (สำคัญมาก!)
+    Citizen.Wait(3000)
+    
     while true do
-        Citizen.Wait(WAIT_TIME)
+        Citizen.Wait(10)  -- รอ 10ms ต่อรอบ (เร็วพอ ไม่กินทรัพยากร)
         
-        if not isAutoRunning then
-            Citizen.Wait(500)
-            goto continue
-        end
-        
-        local ped = PlayerPedId()
-        
-        -- บิน + ทะลุกำแพง + ไม่ล้ม
-        SetEntityCollision(ped, false, false)
-        SetEntityInvincible(ped, true)
-        SetPedCanRagdoll(ped, false)
-        SetPlayerInvincible(PlayerId(), true)
-        
-        -- ความเร็ววิ่ง x2 (เผื่อใช้เดินบ้าง)
-        SetRunSprintMultiplierForPlayer(PlayerId(), 2.0)
-        SetPedMoveRateOverride(ped, 2.0)
-        
-        local pos = GetEntityCoords(ped)
-        local dist = #(pos - currentTarget)
-        
-        if dist > DISTANCE_TOLERANCE then
-            -- คำนวณทิศทาง
-            local direction = (currentTarget - pos)
-            local length = #direction
+        if isActive then
+            local ped = PlayerPedId()
             
-            if length > 0 then
-                direction = direction / length
+            -- ถ้าไม่มีตัวละคร ให้ข้ามรอบนี้ไป
+            if ped == nil or ped == 0 then
+                Citizen.Wait(500)
+                goto continue
             end
             
-            -- เคลื่อนที่ทีละน้อย (ป้องกัน Anti-Teleport)
-            local step = SPEED
-            local newPos = vector3(
-                pos.x + direction.x * step,
-                pos.y + direction.y * step,
-                pos.z + direction.z * step + 0.05  -- +0.05 ป้องกันจมดิน
-            )
+            -- ===== ส่วนบินทะลุกำแพง =====
+            SetEntityCollision(ped, false, false)
+            SetEntityInvincible(ped, true)
+            SetPedCanRagdoll(ped, false)
             
-            -- บังคับเคลื่อนที่แบบไม่มีการคำนวณชน
-            SetEntityCoordsNoOffset(ped, newPos.x, newPos.y, newPos.z, false, false, false)
+            -- ===== ส่วนวิ่งเร็ว x2 =====
+            SetRunSprintMultiplierForPlayer(PlayerId(), 2.0)
+            SetPedMoveRateOverride(ped, 2.0)
             
-        else
-            -- ถึงจุดแล้ว: สลับเป้าหมาย
-            if currentTarget == PICKUP_POINT then
-                currentTarget = SWEEP_POINT
-                TriggerEvent('chat:addMessage', { args = { "System", "🎯 ถึงจุดรับงาน !" } })
-                print("🎯 ถึงจุดรับงาน")
+            -- ===== ส่วนเคลื่อนที่อัตโนมัติ =====
+            local pos = GetEntityCoords(ped)
+            local dist = #(pos - currentTarget)
+            
+            -- Debug แสดงระยะทาง (กด F8 เพื่อดู)
+            if alreadyPrinted == false then
+                print("📍 ระยะทางถึงเป้าหมาย: " .. dist)
+                alreadyPrinted = true
+            end
+            
+            if dist > 1.0 then
+                -- คำนวณทิศทาง
+                local direction = (currentTarget - pos)
+                local length = #direction
                 
-                -- ถ้าต้องการรับงานอัตโนมัติ ใส่โค้ดตรงนี้
-                -- ExecuteCommand("รับงาน") หรือ TriggerServerEvent
+                if length > 0 then
+                    direction = direction / length
+                end
+                
+                -- เคลื่อนที่ทีละน้อย
+                local newPos = vector3(
+                    pos.x + direction.x * 3.0,
+                    pos.y + direction.y * 3.0,
+                    pos.z + direction.z * 3.0
+                )
+                
+                -- ยกเลิกการกระทำเดิมทั้งหมด แล้วขยับตำแหน่ง
+                ClearPedTasksImmediately(ped)
+                SetEntityCoordsNoOffset(ped, newPos.x, newPos.y, newPos.z, false, false, false)
                 
             else
-                currentTarget = PICKUP_POINT
-                TriggerEvent('chat:addMessage', { args = { "System", "🧹 ถึงจุดกวาด !" } })
-                print("🧹 ถึงจุดกวาด")
+                -- ถึงจุดแล้ว สลับเป้าหมาย
+                if currentTarget == PICKUP then
+                    currentTarget = SWEEP
+                    print("✅ ถึงจุดรับงาน! กำลังไปจุดกวาด...")
+                    TriggerEvent("chat:addMessage", { args = {"SYSTEM", "✅ ถึงจุดรับงาน!"} })
+                else
+                    currentTarget = PICKUP
+                    print("✅ ถึงจุดกวาด! กำลังกลับไปรับงาน...")
+                    TriggerEvent("chat:addMessage", { args = {"SYSTEM", "✅ ถึงจุดกวาด!"} })
+                end
+                Citizen.Wait(500)
             end
-            
-            -- หยุดนิดนึงก่อนเดินทางต่อ
-            Citizen.Wait(300)
         end
         
         ::continue::
     end
 end)
 
------------------------------------------------------------------------
--- กดปุ่ม F8 เพื่อเปิด/ปิดระบบ (มือถือใช้ปุ่มบนแป้นลอย)
------------------------------------------------------------------------
+-- ============================================
+-- กด F8 เพื่อเปิด/ปิด (หรือใช้ปุ่มบนมือถือ)
+-- ============================================
 Citizen.CreateThread(function()
     while true do
         Citizen.Wait(0)
         
-        -- F8 (รหัส 168)
-        if IsControlJustPressed(0, 168) then
-            isAutoRunning = not isAutoRunning
+        if IsControlJustPressed(0, 168) then  -- F8
+            isActive = not isActive
+            local status = isActive and "ON ✅" or "OFF ❌"
+            print("🔘 ฟาร์มอัตโนมัติ: " .. status)
+            TriggerEvent("chat:addMessage", { args = {"SYSTEM", "ฟาร์มอัตโนมัติ: " .. status} })
             
-            local status = isAutoRunning and "ON ✅" or "OFF ❌"
-            TriggerEvent('chat:addMessage', { args = { "System", "ฟาร์มอัตโนมัติ: " .. status } })
-            print("ฟาร์มอัตโนมัติ: " .. status)
-            
-            -- ถ้าปิดระบบ ให้คืนค่าการชนปกติ
-            if not isAutoRunning then
+            if not isActive then
+                -- คืนค่าสถานะปกติ
                 local ped = PlayerPedId()
                 SetEntityCollision(ped, true, true)
                 SetEntityInvincible(ped, false)
                 ClearPedTasks(ped)
             end
         end
-        
-        -- ปุ่ม F7 (รหัส 167) = บิน/เดิน (สลับโหมด)
-        if IsControlJustPressed(0, 167) then
-            isFlying = not isFlying
-            print("โหมดบิน: " .. tostring(isFlying))
-        end
     end
 end)
 
------------------------------------------------------------------------
--- ป้องกันตกโลก + ปรับ Z อัตโนมัติ
------------------------------------------------------------------------
-Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(100)
-        local ped = PlayerPedId()
-        local pos = GetEntityCoords(ped)
-        
-        -- ถ้าต่ำเกินไป ให้ดีดขึ้น
-        if pos.z < 200 then
-            SetEntityCoords(ped, pos.x, pos.y, 254.851868, false, false, false, false)
-        end
-    end
-end)
+-- ============================================
+-- แจ้งเตือนว่าสคริปโหลดสำเร็จ
+-- ============================================
+print("========================================")
+print("🚀 FARM SCRIPT LOADED SUCCESSFULLY!")
+print("📍 จุดรับงาน: " .. PICKUP.x .. ", " .. PICKUP.y .. ", " .. PICKUP.z)
+print("📍 จุดกวาด: " .. SWEEP.x .. ", " .. SWEEP.y .. ", " .. SWEEP.z)
+print("🔘 กด F8 เพื่อเปิด/ปิดระบบ")
+print("========================================")
 
------------------------------------------------------------------------
--- แสดงตำแหน่งปัจจุบัน ( debug )
------------------------------------------------------------------------
-Citizen.CreateThread(function()
-    while true do
-        Citizen.Wait(5000)
-        if isAutoRunning then
-            local ped = PlayerPedId()
-            local pos = GetEntityCoords(ped)
-            local distToPickup = #(pos - PICKUP_POINT)
-            local distToSweep = #(pos - SWEEP_POINT)
-            
-            print(string.format("📍 ตำแหน่ง: %.2f, %.2f, %.2f | ถึงรับงาน: %.1f | ถึงกวาด: %.1f", 
-                pos.x, pos.y, pos.z, distToPickup, distToSweep))
-        end
-    end
-end)
-
------------------------------------------------------------------------
--- รันทันทีที่สคริปโหลด (ไม่ต้องกดอะไร)
------------------------------------------------------------------------
-AddEventHandler('onClientResourceStart', function(resourceName)
-    if GetCurrentResourceName() == resourceName then
-        Citizen.Wait(1000)
-        TriggerEvent('chat:addMessage', { args = { "System", "🚀 เริ่มฟาร์มอัตโนมัติแล้ว!" } })
-        print("🚀 เริ่มฟาร์มอัตโนมัติแล้ว! กด F8 เพื่อหยุด")
-    end
-end)
+TriggerEvent("chat:addMessage", { args = {"SYSTEM", "🚀 สคริปฟาร์มโหลดสำเร็จ! กด F8 เพื่อเริ่ม/หยุด"} })
