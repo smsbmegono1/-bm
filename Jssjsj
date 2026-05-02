@@ -1,0 +1,292 @@
+-- =========================
+-- โหลด UI Library
+-- =========================
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/x2zu/OPEN-SOURCE-UI-ROBLOX/refs/heads/main/X2ZU%20UI%20ROBLOX%20OPEN%20SOURCE/DummyUi-leak-by-x2zu/fetching-main/Tools/Framework.luau"))()
+
+-- =========================
+-- สร้างหน้าต่างหลัก
+-- =========================
+local Window = Library:Window({
+    Title = "BmEGOno1 Hub",
+    Desc = "UI by สุดหล่อเมืองธน",
+    Icon = 105059922903197,
+    Theme = "Dark",
+    Config = {
+        Keybind = Enum.KeyCode.LeftControl,
+        Size = UDim2.new(0, 500, 0, 400)
+    },
+    CloseUIButton = { Enabled = true, Text = "BmEGOno1 Hub" }
+})
+
+-- =========================
+-- แท็บ
+-- =========================
+local MainTab = Window:Tab({ Title = "Main", Icon = "star" })
+local VisualTab = Window:Tab({ Title = "Visual", Icon = "eye" })
+local CheatTab = Window:Tab({ Title = "โกงโหดๆ", Icon = "wrench" })
+local CreditsTab = Window:Tab({ Title = "Credits", Icon = "crown" })
+
+-- =========================
+-- ตัวแปรระบบ
+-- =========================
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+local speedEnabled, espEnabled, godEnabled, noclipEnabled, fpsEnabled = false, false, false, false, false
+local normalSpeed, boostedSpeed = 16, 100
+local espObjects = {}
+
+-- =========================
+-- MAIN TAB
+-- =========================
+MainTab:Label({ Title = "ยินดีต้อนรับสู่ BmEGOno1 Hub!", Desc = "กด LeftControl เพื่อเปิด/ปิด UI" })
+MainTab:Toggle({
+    Title = "Speed Boost",
+    Default = false,
+    Callback = function(state) speedEnabled = state end
+})
+
+RunService.RenderStepped:Connect(function()
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = speedEnabled and boostedSpeed or normalSpeed
+    end
+end)
+
+-- =========================
+-- VISUAL TAB (ESP + FPS)
+-- =========================
+local function createESP(player)
+    if player == LocalPlayer or not player.Character then return end
+    local char = player.Character
+    local head = char:FindFirstChild("Head")
+    if not head then return end
+
+    if espObjects[player] then
+        for _, o in ipairs(espObjects[player]) do o:Destroy() end
+    end
+    espObjects[player] = {}
+
+    local highlight = Instance.new("Highlight")
+    highlight.Adornee = char
+    highlight.FillTransparency = 0.7
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.FillColor = (player.Team and player.Team.Name == "Killer") and Color3.fromRGB(255,0,0) or Color3.fromRGB(0,255,0)
+    highlight.Parent = Workspace
+    table.insert(espObjects[player], highlight)
+
+    local billboard = Instance.new("BillboardGui")
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0,150,0,25)
+    billboard.StudsOffset = Vector3.new(0,2.5,0)
+    billboard.AlwaysOnTop = true
+    billboard.Parent = head
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,0,1,0)
+    label.BackgroundTransparency = 1
+    label.Text = player.DisplayName or player.Name
+    label.TextColor3 = highlight.FillColor
+    label.TextStrokeTransparency = 0.2
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 14
+    label.Parent = billboard
+    table.insert(espObjects[player], billboard)
+end
+
+local function setupPlayer(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then task.wait(1) createESP(player) end
+    end)
+end
+
+for _, p in ipairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then setupPlayer(p) end
+end
+
+Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(function(p)
+    if espObjects[p] then
+        for _, o in ipairs(espObjects[p]) do o:Destroy() end
+        espObjects[p] = nil
+    end
+end)
+
+VisualTab:Toggle({
+    Title = "Player ESP",
+    Default = false,
+    Callback = function(state)
+        espEnabled = state
+        if not state then
+            for _, objs in pairs(espObjects) do
+                for _, o in ipairs(objs) do o:Destroy() end
+            end
+            espObjects = {}
+            return
+        end
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then createESP(p) end
+        end
+    end
+})
+
+local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+local fpsGui = playerGui:FindFirstChild("BmEGOno1_FPS") or Instance.new("ScreenGui", playerGui)
+fpsGui.Name = "BmEGOno1_FPS"
+
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(0, 120, 0, 30)
+fpsLabel.Position = UDim2.new(1, -130, 0, 10)
+fpsLabel.BackgroundTransparency = 0.5
+fpsLabel.BackgroundColor3 = Color3.fromRGB(0,0,0)
+fpsLabel.TextColor3 = Color3.fromRGB(255,255,255)
+fpsLabel.TextScaled = true
+fpsLabel.Font = Enum.Font.SourceSansBold
+fpsLabel.Text = "FPS: 0"
+fpsLabel.Visible = false
+fpsLabel.Parent = fpsGui
+
+VisualTab:Toggle({
+    Title = "แสดง FPS",
+    Default = false,
+    Callback = function(state)
+        fpsEnabled = state
+        fpsLabel.Visible = state
+    end
+})
+
+local lastTime = tick()
+local frameCount = 0
+RunService.RenderStepped:Connect(function()
+    if fpsEnabled then
+        frameCount += 1
+        local currentTime = tick()
+        if currentTime - lastTime >= 1 then
+            fpsLabel.Text = "FPS: "..frameCount
+            frameCount = 0
+            lastTime = currentTime
+        end
+    end
+end)
+
+-- =========================
+-- CHEAT TAB ("โกงโหดๆ")
+-- =========================
+-- GOD MODE
+CheatTab:Toggle({
+    Title = "God Mode",
+    Default = false,
+    Callback = function(state)
+        godEnabled = state
+        if godEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Name = "GodHumanoid"
+        end
+    end
+})
+
+-- FLY
+CheatTab:Button({
+    Title = "Fly",
+    Description = "Enable Fly Script",
+    Callback = function()
+        loadstring("\108\111\97\100\115\116\114\105\110\103\40\103\97\109\101\58\72\116\116\112\71\101\116\40\40\39\104\116\116\112\115\58\47\47\103\105\115\116\46\103\105\116\104\117\98\117\115\101\114\99\111\110\116\101\110\116\46\99\111\109\47\109\101\111\122\111\110\101\89\84\47\98\102\48\51\55\100\102\102\57\102\48\97\55\48\48\49\55\51\48\52\100\100\100\54\55\102\100\99\100\51\55\48\47\114\97\119\47\101\49\52\101\55\52\102\52\50\53\98\48\54\48\100\102\53\50\51\51\52\51\99\102\51\48\98\55\56\55\48\55\52\101\98\51\99\53\100\50\47\97\114\99\101\117\115\37\50\53\50\48\120\37\50\53\50\48\102\108\121\37\50\53\50\48\50\37\50\53\50\48\111\98\102\108\117\99\97\116\111\114\39\41\44\116\114\117\101\41\41\40\41\10\10")()
+    end
+})
+
+-- HITBOX
+CheatTab:Button({
+    Title = "Hitbox",
+    Description = "Enable Hitbox Script",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastefy.app/ItfO0tdg/raw"))()
+    end
+})
+
+-- NOCLIP
+CheatTab:Toggle({
+    Title = "เดินทะลุ (NoClip)",
+    Default = false,
+    Callback = function(state)
+        noclipEnabled = state
+    end
+})
+
+RunService.Stepped:Connect(function()
+    if noclipEnabled and LocalPlayer.Character then
+        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- Small Toggle Shift Lock (รวมเข้าแท็บ CheatTab)
+repeat task.wait() until game:IsLoaded() and LocalPlayer
+local camera = workspace.CurrentCamera
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SmallShiftLockGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 30, 0, 30)
+ToggleButton.Position = UDim2.new(0, 20, 0, 20)
+ToggleButton.Text = ""
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+ToggleButton.BorderSizePixel = 0
+ToggleButton.AutoButtonColor = true
+ToggleButton.Parent = ScreenGui
+
+local CenterFrame = Instance.new("Frame")
+CenterFrame.Size = UDim2.new(0, 8, 0, 8)
+CenterFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+CenterFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+CenterFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CenterFrame.BorderSizePixel = 0
+CenterFrame.Visible = false
+CenterFrame.Parent = ScreenGui
+
+local lines = {}
+local offsets = {UDim2.new(0.5,0,0.5,-8),UDim2.new(0.5,0,0.5,8),UDim2.new(0.5,-8,0.5,0),UDim2.new(0.5,8,0.5,0)}
+local sizes = {UDim2.new(0,2,0,4),UDim2.new(0,2,0,4),UDim2.new(0,4,0,2),UDim2.new(0,4,0,2)}
+for i=1,4 do
+    local line = Instance.new("Frame")
+    line.Size = sizes[i]
+    line.Position = offsets[i]
+    line.AnchorPoint = Vector2.new(0.5,0.5)
+    line.BackgroundColor3 = Color3.fromRGB(255,255,255)
+    line.BorderSizePixel = 0
+    line.Visible = false
+    line.Parent = ScreenGui
+    table.insert(lines,line)
+end
+
+local isEnabled = false
+local function toggleShiftLock()
+    isEnabled = not isEnabled
+    CenterFrame.Visible = isEnabled
+    for _, line in pairs(lines) do line.Visible = isEnabled end
+end
+ToggleButton.MouseButton1Click:Connect(toggleShiftLock)
+
+RunService.RenderStepped:Connect(function()
+    if isEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = LocalPlayer.Character.HumanoidRootPart
+        local screenCenter = Vector2.new(camera.ViewportSize.X/2,camera.ViewportSize.Y/2)
+        local ray = camera:ViewportPointToRay(screenCenter.X,screenCenter.Y)
+        local lookAt = ray.Origin + ray.Direction*100
+        hrp.CFrame = CFrame.new(hrp.Position,Vector3.new(lookAt.X,hrp.Position.Y,lookAt.Z))
+    end
+end)
+
+-- =========================
+-- CREDITS
+-- =========================
+CreditsTab:Paragraph({
+    Title = "👑 BmEGOno1 Hub",
+    Content = "สร้างโดย: สุดหล่อเมืองธน\nใช้ X2ZU Dummy UI"
+})
